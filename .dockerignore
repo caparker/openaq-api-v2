@@ -1,0 +1,9 @@
+cdk
+schema
+tests
+.git/*
+.cache
+**/*.class
+*.md
+env.example
+.env*
