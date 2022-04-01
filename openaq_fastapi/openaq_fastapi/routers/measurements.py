@@ -8,7 +8,7 @@ import orjson as json
 from dateutil.tz import UTC
 from datetime import timedelta, datetime
 from fastapi import APIRouter, Depends, Query
-from starlette.responses import Response, JSONResponse
+from starlette.responses import Response
 from ..db import DB
 from ..models.responses import Meta
 from ..models.queries import (
@@ -23,7 +23,7 @@ from ..models.queries import (
     Sort,
     SensorTypes,
     EntityTypes,
-    Versions,
+    Version,
 )
 import csv
 import io
@@ -83,7 +83,7 @@ class MeasOrder(str, Enum):
 
 
 class Measurements(
-        Location, City, Country, Geo, Measurands, HasGeo, APIBase, DateRange, Versions
+        Location, City, Country, Geo, Measurands, HasGeo, APIBase, DateRange, Version
 ):
     order_by: MeasOrder = Query("datetime")
     sort: Sort = "desc"

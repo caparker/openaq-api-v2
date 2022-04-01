@@ -5,21 +5,14 @@ import time
 from typing import Any, List
 
 import orjson
-from fastapi import (
-    FastAPI,
-    Security,
-    Depends,
-    HTTPException
-    )
+from fastapi import FastAPI
 
-from fastapi.security import APIKeyHeader
-from starlette.status import HTTP_403_FORBIDDEN
 
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-# from fastapi.openapi.utils import get_openapi
+from fastapi.openapi.utils import get_openapi
 from mangum import Mangum
 from pydantic import BaseModel, ValidationError
 from starlette.responses import JSONResponse, RedirectResponse
@@ -55,19 +48,6 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-API_KEY_NAME = "access_token"
-
-
-async def get_api_key(
-    api_key_header: str = Security(
-        APIKeyHeader(
-            name=API_KEY_NAME,
-            auto_error=False
-        )
-    ),
-):
-    return api_key_header
-
 
 def default(obj):
     if isinstance(obj, float):
@@ -89,6 +69,36 @@ app = FastAPI(
     docs_url="/",
 )
 
+
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    openapi_schema = get_openapi(
+        title=app.title,
+        description=app.description,
+        version="2.0.0",
+        routes=app.routes,
+    )
+    if settings.API_KEY is not None and settings.API_KEY != '':
+        # Add the API scheme
+        openapi_schema['components']['securitySchemes'] = {
+            "APIKeyHeader": {
+                "type": "apiKey",
+                "in": "header",
+                "name": "x-api-key",
+            }
+        }
+        paths = openapi_schema['paths'].keys()
+        for path in paths:
+            openapi_schema['paths'][path]['get']['security'] = [
+                {"APIKeyHeader": []},
+            ]
+
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+
+app.openapi = custom_openapi
 
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.add_middleware(
@@ -144,14 +154,14 @@ async def shutdown_event():
 
 
 @app.get("/ping")
-def pong(api_key: str = Depends(get_api_key)):
+def pong():
     """
     Sanity check.
     This will let the user know that the service is operational.
     And this path operation will:
     * show a lifesign
     """
-    return {"ping": f"pong! {api_key}"}
+    return {"ping": "pong!"}
 
 
 @app.get("/favicon.ico")

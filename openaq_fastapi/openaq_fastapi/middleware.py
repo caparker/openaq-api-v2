@@ -11,11 +11,6 @@ from starlette.responses import JSONResponse
 
 from openaq_fastapi.settings import settings
 
-from fastapi import (
-    status,
-    HTTPException,
-)
-
 logger = logging.getLogger(__name__)
 
 
@@ -97,16 +92,20 @@ class APIKeyMiddleware(BaseHTTPMiddleware):
     """Very simple API key middleware. Requires at least one route
     to include the securty method for the docs to show a form"""
 
-    async def dispatch(self, request: Request, call_next):
+    async def dispatch(self,
+                       request: Request,
+                       call_next,
+                       ):
         api_key = settings.API_KEY
         whitelist = ["/openapi.json", "/"]
+        header_names = ["authorization", "x-api-key", "access_token"]
         route = request.url.path
         if route not in whitelist and api_key is not None:
             token = None
-            if 'access_token' in request.headers.keys():
-                token = request.headers['access_token']
-            if 'Authorization' in request.headers.keys():
-                token = request.headers['Authorization']
+            for name in header_names:
+                if name in request.headers.keys():
+                    token = request.headers[name]
+
             if token is None:
                 return JSONResponse(
                     {
