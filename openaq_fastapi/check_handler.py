@@ -5,6 +5,9 @@ import os
 # from pandas import DataFrame
 from pathlib import Path
 
+logging.getLogger('boto3').setLevel(logging.WARNING)
+logging.getLogger('botocore').setLevel(logging.WARNING)
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--id', type=int, required=False)
 parser.add_argument('--env', type=str, required=False)
@@ -42,7 +45,9 @@ from openaq_fastapi.ingest.utils import (
     calculate_hourly_rollup_day,
     calculate_hourly_rollup_hour,
     calculate_hourly_rollup_stale,
+    get_logs_from_ids,
 )
+from openaq_fastapi.ingest.fetch import load_realtime
 from openaq_fastapi.settings import settings
 
 logger = logging.getLogger(__name__)
@@ -60,6 +65,13 @@ if args.dir is not None:
             logger.debug(f'{row[0]}: {row[1]}')
 
 
+if args.id is not None:
+    logger.info(f'Processing individual file: {args.id}')
+    logs = get_logs_from_ids([args.id])
+    keys = [log[1] for log in logs]
+    load_realtime(keys)
+
+
 # n = calculate_hourly_rollup_day('2021-12-01')
 # print(n)
 
@@ -68,18 +80,19 @@ if args.dir is not None:
 
 # n = calculate_hourly_rollup_stale()
 # print(n)
-if args.method is not None:
-    handler({
-        "source": "manual",
-        "method": args.method,
-        "day": args.day,
-        "hour": args.hour,
-    }, {})
-else:
-    handler({
-        "source": "aws.events",
-        "pipeline_limit": 0,
-        "realtime_limit": 0,
-        "metadata_limit": 0,
-        "versions_limit": 10,
-    }, {})
+
+# if args.method is not None:
+#     handler({
+#         "source": "manual",
+#         "method": args.method,
+#         "day": args.day,
+#         "hour": args.hour,
+#     }, {})
+# else:
+#     handler({
+#         "source": "aws.events",
+#         "pipeline_limit": 0,
+#         "realtime_limit": 0,
+#         "metadata_limit": 0,
+#         "versions_limit": 10,
+#     }, {})

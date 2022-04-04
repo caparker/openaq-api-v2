@@ -85,7 +85,7 @@ def custom_openapi():
             "APIKeyHeader": {
                 "type": "apiKey",
                 "in": "header",
-                "name": "x-api-key",
+                "name": "Authorization",
             }
         }
         paths = openapi_schema['paths'].keys()

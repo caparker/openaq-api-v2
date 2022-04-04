@@ -1,12 +1,6 @@
 import logging
 
-logging.basicConfig(
-    format = '[%(asctime)s] %(levelname)s [%(name)s:%(lineno)s] %(message)s',
-    level = logging.DEBUG,
-)
-
 import boto3
-import logging
 import psycopg2
 from ..settings import settings
 from .lcs import (
